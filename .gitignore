@@ -33,3 +33,5 @@
 
 # No Configure
 *.user
+build
+.vscode
