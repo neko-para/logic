@@ -57,7 +57,7 @@ struct NotToken : public Token {};
 
 struct ContainToken : public Token {};
 
-//struct EqualToken : public Token {};
+struct EqualToken : public Token {};
 
 Token* Lex(QString str);
 

@@ -31,10 +31,11 @@ Token* Lex(QString str) {
 			stack.pop_back();
 			break;
 		}
-		TOKEN_CASE('~', NotToken);
+		TOKEN_CASE('!', NotToken);
 		TOKEN_CASE('&', CapToken);
 		TOKEN_CASE('|', CupToken);
 		TOKEN_CASE('^', ContainToken);
+		TOKEN_CASE('~', EqualToken);
 		default: {
 			if (str[i].isLower()) {
 				switch (str[i].unicode()) {

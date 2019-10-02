@@ -6,11 +6,31 @@ static Token* replace(Token* fromL, Token* fromR, Token* to) {
 	return to;
 }
 
-enum class CapCupToken {
-	CAP,
-	CUP,
-	HEAD,
-};
+static void checkIsMix(Token* head) {
+	bool flag = true;
+	auto t = head->next;
+	for (; t; t = t->next) {
+		if (flag ^ t->test<Expression>()) {
+			throw t;
+		}
+		flag = !flag;
+	}
+	if (flag) {
+		throw t;
+	}
+}
+
+template <typename TokenType, typename ExpressionType>
+void ParseToken(Token* head) {
+	for (auto t = head->next; t; t = t->next) {
+		if (t->test<TokenType>()) {
+			ExpressionType* e = new ExpressionType(t->prev->cast<ExpressionType>(), t->next->cast<ExpressionType>());
+			replace(t->prev, t->next, e);
+			delete t;
+			t = e;
+		}
+	}
+}
 
 Expression* Parse(Token* tokens) {
 	HeadToken* head = tokens->cast<HeadToken>();
@@ -52,68 +72,10 @@ Expression* Parse(Token* tokens) {
 			t = e;
 		}
 	}
-	for (auto t = head->next; t; t = t->next) {
-		if (t->cast<ContainToken>()) {
-			if (!t->next) {
-				throw t;
-			}
-			Expression* from = t->prev->cast<Expression>();
-			Expression* to = t->next->cast<Expression>();
-			if (!from || !to) {
-				throw t;
-			}
-			Token* e = replace(from, to, new ContainExpression(from, to));
-			delete t;
-			t = e;
-		}
-	}
-	bool flag = true;
-	auto t = head->next;
-	for (; t; t = t->next) {
-		if (flag && !t->test<Expression>()) {
-			throw t;
-		}
-		if (!flag && !(t->test<CapToken>() || t->test<CupToken>())) {
-			throw t;
-		}
-		flag = !flag;
-	}
-	if (flag) {
-		throw t;
-	}
-	t = head->next;
-	delete head;
-	CapCupToken prev = CapCupToken::HEAD;
-	Expression* result = t->cast<Expression>();
-	while (t->next) {
-		if (t->test<CapToken>()) {
-			t = t->next;
-			delete t->prev;
-			Expression* nxt = t->cast<Expression>();
-			if (prev == CapCupToken::CAP) {
-				result->cast<CapExpression>()->sub.push_back(nxt);
-			} else {
-				prev = CapCupToken::CAP;
-				CapExpression* e = new CapExpression;
-				e->sub.push_back(result);
-				e->sub.push_back(nxt);
-				result = e;
-			}
-		} else {
-			t = t->next;
-			delete t->prev;
-			Expression* nxt = t->cast<Expression>();
-			if (prev == CapCupToken::CUP) {
-				result->cast<CupExpression>()->sub.push_back(nxt);
-			} else {
-				prev = CapCupToken::CUP;
-				CupExpression* e = new CupExpression;
-				e->sub.push_back(result);
-				e->sub.push_back(nxt);
-				result = e;
-			}
-		}
-		t = t->next;
-	}
-	return result;
+	checkIsMix(head);
+	ParseToken<CapToken, CapExpression>(head);
+	ParseToken<CupToken, CupExpression>(head);
+	ParseToken<ContainToken, ContainExpression>(head);
+	ParseToken<EqualToken, EqualExpression>(head);
+	return head->next->cast<Expression>();
 }

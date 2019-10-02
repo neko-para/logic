@@ -36,51 +36,31 @@ struct NotExpression : public Expression {
 	}
 };
 
-struct CapExpression : public Expression {
-	QList<Expression*> sub;
+struct BinaryExpression : public Expression {
+	Expression* left;
+	Expression* right;
+	BinaryExpression(Expression* l, Expression* r) : left(l), right(r) {}
+};
+
+#define DECLARE_BINARY_EXPRESSION(type, op) \
+	struct type##Expression : public BinaryExpression { \
+		using BinaryExpression::BinaryExpression; \
+		virtual bool eval(unsigned bit) const { \
+			return left->eval(bit) op right->eval(bit); \
+		} \
+	}
+
+DECLARE_BINARY_EXPRESSION(Cap, &);
+DECLARE_BINARY_EXPRESSION(Cup, |);
+DECLARE_BINARY_EXPRESSION(Equal, ==);
+
+struct ContainExpression : public BinaryExpression {
+	using BinaryExpression::BinaryExpression;
 	virtual bool eval(unsigned bit) const {
-		bool val = true;
-		for (auto exp : sub) {
-			val &= exp->eval(bit);
-			if (!val) {
-				break;
-			}
-		}
-		return val;
+		return !left->eval(bit) | right->eval(bit);
 	}
 };
 
-struct CupExpression : public Expression {
-	QList<Expression*> sub;
-	virtual bool eval(unsigned bit) const {
-		bool val = false;
-		for (auto exp : sub) {
-			val |= exp->eval(bit);
-			if (val) {
-				break;
-			}
-		}
-		return val;
-	}
-};
-
-struct ContainExpression : public Expression {
-	Expression* from;
-	Expression* to;
-	ContainExpression(Expression* f, Expression* t) : from(f), to(t) {}
-	virtual bool eval(unsigned bit) const {
-		return !from->eval(bit) | to->eval(bit);
-	}
-};
-/*
-struct EqualExpression : public Expression {
-	Expression* a;
-	Expression* b;
-	virtual bool eval(unsigned bit) const {
-		return !(a->eval(bit) ^ b->eval(bit));
-	}
-};
-*/
 Expression* Parse(Token* tokens);
 
 #endif // EXPRESSION_H
