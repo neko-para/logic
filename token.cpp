@@ -1,5 +1,7 @@
 #include "token.h"
 
+Token::~Token() {}
+
 #define TOKEN_CASE(ch, type) case ch: \
 	prev = prev->setNext(new type); \
 	break

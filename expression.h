@@ -5,6 +5,7 @@
 #include "token.h"
 
 struct Expression : public Token {
+    virtual ~Expression();
 	virtual bool eval(unsigned ) const = 0;
 };
 

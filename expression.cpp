@@ -79,3 +79,5 @@ Expression* Parse(Token* tokens) {
 	ParseToken<EqualToken, EqualExpression>(head);
 	return head->next->cast<Expression>();
 }
+
+Expression::~Expression() {}

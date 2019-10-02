@@ -6,7 +6,7 @@
 struct Token {
 	Token* prev = nullptr;
 	Token* next = nullptr;
-	virtual ~Token() {}
+    virtual ~Token();
 	Token* setNext(Token* t) {
 		next = t;
 		if (t) {
