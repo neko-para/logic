@@ -2,22 +2,29 @@
 
 Token::~Token() {}
 
-#define TOKEN_CASE(ch, type) case ch: \
-	prev = prev->setNext(new type); \
+/*
+ * 通用二元运算case
+ * ch	运算符
+ * type	token
+ * */
+#define TOKEN_CASE(ch, type, pos) case ch: \
+	prev = prev->setNext(new type(pos)); \
 	break
 
+// 词法解析
+// throw int 异常为错误的index
 Token* Lex(QString str) {
 	if (!str.length()) {
 		throw 0;
 	}
 	QList<LBracketToken*> stack;
-	static HeadToken head;
+	static HeadToken head(0);
 	Token* prev = &head;
 
-	for (int i = 0; i < str.length(); ++i) {
-		switch (str[i].unicode()) {
+	for (int i = 1; i <= str.length(); ++i) {
+		switch (str[i - 1].unicode()) {
 		case '(': {
-			LBracketToken* token = new LBracketToken;
+			LBracketToken* token = new LBracketToken(i);
 			prev = prev->setNext(token);
 			stack.push_back(token);
 			break;
@@ -26,25 +33,24 @@ Token* Lex(QString str) {
 			if (!stack.size()) {
 				throw i;
 			}
-			RBracketToken* token = new RBracketToken;
+			RBracketToken* token = new RBracketToken(i, stack.back());
 			prev = prev->setNext(token);
 			stack.back()->right = token;
-			token->left = stack.back();
 			stack.pop_back();
 			break;
 		}
-		TOKEN_CASE('!', NotToken);
-		TOKEN_CASE('&', CapToken);
-		TOKEN_CASE('|', CupToken);
-		TOKEN_CASE('^', ContainToken);
-		TOKEN_CASE('~', EqualToken);
+		TOKEN_CASE('!', NotToken, i);
+		TOKEN_CASE('&', CapToken, i);
+		TOKEN_CASE('|', CupToken, i);
+		TOKEN_CASE('^', ContainToken, i);
+		TOKEN_CASE('~', EqualToken, i);
 		default: {
 			if (str[i].isLower()) {
 				switch (str[i].unicode()) {
-				TOKEN_CASE('T', TrueToken);
-				TOKEN_CASE('F', FalseToken);
+				TOKEN_CASE('T', TrueToken, i);
+				TOKEN_CASE('F', FalseToken, i);
 				default: {
-					ValueToken* token = new ValueToken;
+					ValueToken* token = new ValueToken(i);
 					token->id = str[i].unicode() - 'A';
 					prev = prev->setNext(token);
 				}

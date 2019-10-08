@@ -4,8 +4,11 @@
 #include <QList>
 
 struct Token {
+	size_t posL, posR;
 	Token* prev = nullptr;
 	Token* next = nullptr;
+	Token(size_t pos) : posL(pos), posR(pos) {}
+	Token(size_t pl, size_t pr) : posL(pl), posR(pr) {}
     virtual ~Token();
 	Token* setNext(Token* t) {
 		next = t;
@@ -28,36 +31,34 @@ struct Token {
 	}
 };
 
-struct HeadToken : public Token {};
+#define DECLARE_TOKEN(type) \
+	struct type : public Token { \
+		using Token::Token; \
+	}
 
-struct ValueToken : public Token {
-	unsigned id;
-};
+#define DECLARE_TOKEN_DATA(type, dtype, dname) \
+	struct type : public Token { \
+		dtype dname; \
+		type(size_t pos) : Token(pos) {} \
+		type(size_t pos, dtype d) : Token(pos), dname(d) {} \
+		type(size_t pl, size_t pr, dtype d) : Token(pl, pr), dname(d) {} \
+	}
 
-struct TrueToken : public Token {};
-
-struct FalseToken : public Token {};
+DECLARE_TOKEN(HeadToken);
+DECLARE_TOKEN_DATA(ValueToken, unsigned, id);
+DECLARE_TOKEN(TrueToken);
+DECLARE_TOKEN(FalseToken);
+DECLARE_TOKEN(CapToken);
+DECLARE_TOKEN(CupToken);
+DECLARE_TOKEN(NotToken);
+DECLARE_TOKEN(ContainToken);
+DECLARE_TOKEN(EqualToken);
 
 struct LBracketToken;
 struct RBracketToken;
 
-struct LBracketToken : public Token {
-	RBracketToken* right;
-};
-
-struct RBracketToken : public Token {
-	LBracketToken* left;
-};
-
-struct CapToken : public Token {};
-
-struct CupToken : public Token {};
-
-struct NotToken : public Token {};
-
-struct ContainToken : public Token {};
-
-struct EqualToken : public Token {};
+DECLARE_TOKEN_DATA(LBracketToken, RBracketToken*, right);
+DECLARE_TOKEN_DATA(RBracketToken, LBracketToken*, left);
 
 Token* Lex(QString str);
 

@@ -5,25 +5,32 @@
 #include "token.h"
 
 struct Expression : public Token {
+	using Token::Token;
     virtual ~Expression();
 	virtual bool eval(unsigned ) const = 0;
 };
 
 struct ValueExpression : public Expression {
 	unsigned id;
-	ValueExpression(unsigned i) : id(i) {}
+	ValueExpression(size_t pos, unsigned i) : Expression(pos), id(i) {}
 	virtual bool eval(unsigned bit) const {
 		return (bit >> id) & 1;
 	}
 };
 
-struct TrueExpression : public Expression {
+struct ConstantExpression : public Expression {
+	ConstantExpression(size_t pos) : Expression(pos) {}
+};
+
+struct TrueExpression : public ConstantExpression {
+	using ConstantExpression::ConstantExpression;
 	virtual bool eval(unsigned ) const {
 		return true;
 	}
 };
 
-struct FalseExpression : public Expression {
+struct FalseExpression : public ConstantExpression {
+	using ConstantExpression::ConstantExpression;
 	virtual bool eval(unsigned ) const {
 		return false;
 	}
@@ -31,7 +38,7 @@ struct FalseExpression : public Expression {
 
 struct NotExpression : public Expression {
 	Expression* sub;
-	NotExpression(Expression* s) : sub(s) {}
+	NotExpression(Token* nt, Expression* s) : Expression(nt->posL, s->posR), sub(s) {}
 	virtual bool eval(unsigned bit) const {
 		return !sub->eval(bit);
 	}
@@ -40,7 +47,7 @@ struct NotExpression : public Expression {
 struct BinaryExpression : public Expression {
 	Expression* left;
 	Expression* right;
-	BinaryExpression(Expression* l, Expression* r) : left(l), right(r) {}
+	BinaryExpression(Expression* l, Expression* r) : Expression(l->posL, r->posR), left(l), right(r) {}
 };
 
 #define DECLARE_BINARY_EXPRESSION(type, op) \
